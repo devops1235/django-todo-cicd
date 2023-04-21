@@ -1,0 +1,33 @@
+pipeline{
+    agent{label 'dev-agent'}
+    
+    stages{
+        stage('code'){
+            steps{
+                git url: 'https://github.com/devops1235/django-todo-cicd.git', branch: 'develop'
+            }
+        }
+        
+        stage('build and Test'){
+            steps{
+                sh 'docker build . -t devopstraning1235/django-todo-app-cicd:latest'
+            }
+        }
+        stage('login and push image'){
+            steps{
+                echo 'logging into docker hub and pushing image...'
+                withCredentials([usernamePassword(credentialsId:'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable:'dockerHubUser')]){
+                    sh "docker login -u ${env. dockerHubUser} -p ${env.dockerHubPassword}"
+                    sh "docker push devopstraning1235/django-todo-app-cicd:latest"
+                }
+                
+            }
+        }
+        stage('deploy'){
+            steps{
+                sh 'docker-compose down && docker-compose up -d'
+            }
+        }
+        
+    }
+}
